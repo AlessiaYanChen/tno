@@ -1,6 +1,7 @@
 **/sh.exe.stackdump
 bash.exe.stackdump
 *.env
+*.nkbak
 .vs
 *.orig
 *.param

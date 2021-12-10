@@ -5,97 +5,7 @@ echo "*************************************"
 echo "Setting up Docker Configuration Files"
 echo "*************************************"
 
-varKeycloak=$(grep -Po 'KEYCLOAK_USER=\K.*$' ./auth/keycloak/.env)
-if [ -z "$varKeycloak" ]
-then
-    echo 'Enter a username for the keycloak realm administrator'
-    read -p 'Username: ' varKeycloak
-else
-    echo "Your keycloak username: $varKeycloak"
-fi
-
-varDbUser=$(grep -Po 'POSTGRES_USER=\K.*$' ./db/postgres/.env)
-if [ -z "$varDbUser" ]
-then
-    echo 'Enter a username for the database.'
-    read -p 'Username: ' varDbUser
-else
-    echo "Your database username: $varDbUser"
-fi
-
-varElastic=$(grep -Po 'ELASTIC_USERNAME=\K.*$' ./db/elasticsearch/.env)
-if [ -z "$varElastic" ]
-then
-    echo 'Enter a username for the Elasticsearch.'
-    read -p 'Username: ' varElastic
-else
-    echo "Your Elasticsearch username: $varElastic"
-fi
-
-varAzureCognitiveServiceKey=$(grep -Po 'COGNITIVE_SERVICES_SPEECH_SUBSCRIPTION_KEY=\K.*$' ./api/editor/api-editor/src/main/resources/.env)
-if [ -z "$varAzureCognitiveServiceKey" ]
-then
-    echo 'Enter your Azure Cognitive Service subscription key.'
-    read -p 'Key: ' varAzureCognitiveServiceKey
-else
-    echo "Your Azure Cognitive Service subscription key: $varAzureCognitiveServiceKey"
-fi
-
-varAzureCognitiveServiceRegion=$(grep -Po 'COGNITIVE_SERVICES_SPEECH_REGION=\K.*$' ./api/editor/api-editor/src/main/resources/.env)
-if [ -z "$varAzureCognitiveServiceRegion" ]
-then
-    echo 'Enter your Azure Cognitive Service region (i.e. canadacentral).'
-    read -p 'Region: ' varAzureCognitiveServiceRegion
-else
-    echo "Your Azure Cognitive Service region: $varAzureCognitiveServiceRegion"
-fi
-
-varAzureVideoAnalyzerKey=$(grep -Po 'AZURE_VIDEO_ANALYZER_SUBSCRIPTION_KEY=\K.*$' ./api/editor/api-editor/src/main/resources/.env)
-if [ -z "$varAzureVideoAnalyzerKey" ]
-then
-    echo 'Enter your Azure Video Analyzer subscription key.'
-    read -p 'Key: ' varAzureVideoAnalyzerKey
-else
-    echo "Your Azure Video Analyzer subscription key: $varAzureVideoAnalyzerKey"
-fi
-
-varAzureVideoAccountId=$(grep -Po 'AZURE_VIDEO_ANALYZER_ACCOUNT_ID=\K.*$' ./api/editor/api-editor/src/main/resources/.env)
-if [ -z "$varAzureVideoAccountId" ]
-then
-    echo 'Enter your Azure Video Analyzer account ID.'
-    read -p 'Account ID: ' varAzureVideoAccountId
-else
-    echo "Your Azure Video Analyzer account ID: $varAzureVideoAccountId"
-fi
-
-varAzureVideoLocation=$(grep -Po 'AZURE_VIDEO_ANALYZER_LOCATION=\K.*$' ./api/editor/api-editor/src/main/resources/.env)
-if [ -z "$varAzureVideoLocation" ]
-then
-    echo 'Enter your Azure Video Analyzer location (i.e. trial).'
-    read -p 'Location: ' varAzureVideoLocation
-else
-    echo "Your Azure Video Analyzer location: $varAzureVideoLocation"
-fi
-
-# Only required if the Azurite docker container doesn't allow for local domain names.
-# Workaround is to either use 'mcr.microsoft.com/azure-storage/azurite:3.14.0', or use the IP address.
-# echo 'Enter the IP of your local host.docker.internal.'
-# read -p 'IP: ' varHostDockerInternal
-
-varPassword=$(grep -Po 'POSTGRES_PASSWORD=\K.*$' ./db/postgres/.env)
-azureKey=$(date +%s | sha256sum | base64 | head -c 29)
-
-if [ -z "$varPassword" ]
-then
-  # Generate a random password that satisfies password requirements.
-  echo 'A password is randomly being generated.'
-  varPassword=$(date +%s | sha256sum | base64 | head -c 29)A8!
-  echo "Your generated password is: $varPassword"
-else
-  echo "Your password is: $varPassword"
-fi
-
-varDbName="tno"
+. ./tools/scripts/variables.sh
 
 ###########################################################################
 # TNO Configuration
@@ -106,20 +16,92 @@ if test -f "./.env"; then
     echo "./.env exists"
 else
 echo \
-"" >> ./.env
+"#############################
+# Network
+#############################
+
+NGINX_HTTP_PORT=$portNginx
+NGINX_HTTPS_PORT=$portNginxHttps
+
+#############################
+# Data Storage
+#############################
+
+DATABASE_PORT=$portDatabase
+
+KEYCLOAK_HTTP_PORT=$portKeycloak
+KEYCLOAK_HTTPS_PORT=$portKeycloakHttps
+
+ELASTIC_HTTP_PORT=$portElastic
+ELASTIC_COM_PORT=$portElasticCom
+ELASTIC_DEJAVU_HTTP_PORT=$portDejavu
+
+AZURE_BLOB_PORT=$portAzureBlob
+AZURE_QUEUE_PORT=$portAzureQueue
+AZURE_TABLE_PORT=$portAzureTable
+
+#############################
+# Applications
+#############################
+
+API_EDITOR_HTTP_PORT=$portApiEditor
+API_EDITOR_HTTPS_PORT=$portApiEditorHttps
+
+APP_EDITOR_HTTP_PORT=$portAppEditor
+APP_EDITOR_HTTPS_PORT=$portAppEditorHttps
+
+APP_SUBSCRIBER_HTTP_PORT=$portAppSubscriber
+APP_SUBSCRIBER_HTTPS_PORT=$portAppSubscriberHttps
+
+#############################
+# Services
+#############################
+
+SYNDICATION_RSS_PORT=$portSyndicationRss
+SYNDICATION_ATOM_PORT=$portSyndicationAtom
+NLP_PORT=$portNlp
+INDEXING_PORT=$portIndexing
+
+#############################
+# Kafka Configuration
+#############################
+
+KAFKA_ZOOKEEPER_PORT=$portKafkaZookeeper
+KAFKA_BROKER_ADVERTISED_HOST_PORT=$portKafkaBrokerAdvertisedHost
+KAFKA_BROKER_ADVERTISED_EXTERNAL_PORT=$portKafkaBorkerAdvertisedExternal
+KAFKA_SCHEMA_REGISTRY_PORT=$portKafkaSchemaRegistry
+KAFKA_REST_PROXY_PORT=$portKafkaRestProxy
+KAFKA_CONNECT_PORT=$portKafkaConnect
+KAFKA_KSQLDB_PORT=$portKafkaKsqlDb
+KAFKA_KOWL_PORT=$portKafkaKowl" >> ./.env
     echo "./.env created"
 fi
 
-# Database - PostgreSQL
-if test -f "./db/postgres/.env"; then
-    echo "./db/postgres/.env exists"
+# Database - PostgreSQL DockerHub Image
+if test -f "./db/postgres/docker/.env"; then
+    echo "./db/postgres/docker/.env exists"
 else
 echo \
-"POSTGRES_USER=$varDbUser
-POSTGRES_PASSWORD=$varPassword
-POSTGRES_DB=$varDbName
-KEYCLOAK_DB=keycloak" >> ./db/postgres/.env
-    echo "./db/postgres/.env created"
+"POSTGRES_USER=$dbUser
+POSTGRES_PASSWORD=$password
+POSTGRES_DB=$dbName
+
+KEYCLOAK_DATABASE=$keycloakDbName" >> ./db/postgres/docker/.env
+    echo "./db/postgres/docker/.env created"
+fi
+
+# Database - PostgreSQL Redhat Image
+if test -f "./db/postgres/rhel8/.env"; then
+    echo "./db/postgres/rhel8/.env exists"
+else
+echo \
+"POSTGRESQL_USER=$dbUser
+POSTGRESQL_PASSWORD=$password
+POSTGRESQL_DATABASE=$dbName
+POSTGRESQL_ADMIN_PASSWORD=$password
+
+KEYCLOAK_DATABASE=$keycloakDbName" >> ./db/postgres/rhel8/.env
+    echo "./db/postgres/rhel8/.env created"
 fi
 
 # Database - DAL
@@ -127,9 +109,9 @@ if test -f "./libs/java/dal/db/.env"; then
     echo "./libs/java/dal/db/.env exists"
 else
 echo \
-"DB_URL=jdbc:postgresql://host.docker.internal:50002/$varDbName
-DB_USERNAME=$varDbUser
-DB_PASSWORD=$varPassword" >> ./libs/java/dal/db/.env
+"DB_URL=jdbc:postgresql://host.docker.internal:$portDatabase/$dbName
+DB_USERNAME=$dbUser
+DB_PASSWORD=$password" >> ./libs/java/dal/db/.env
     echo "./libs/java/dal/db/.env created"
 fi
 
@@ -139,18 +121,19 @@ if test -f "./auth/keycloak/.env"; then
 else
 echo \
 "PROXY_ADDRESS_FORWARDING=true
+KEYCLOAK_USER=$keycloakUser
+KEYCLOAK_PASSWORD=$keycloakPassword
+KEYCLOAK_IMPORT='/tmp/realm-export.json -Dkeycloak.profile.feature.scripts=enabled -Dkeycloak.profile.feature.upload_scripts=enabled'
+KEYCLOAK_LOGLEVEL=WARN
+ROOT_LOGLEVEL=WARN
+
 DB_VENDOR=POSTGRES
 DB_ADDR=database
 DB_PORT=5432
-DB_DATABASE=keycloak
 DB_SCHEMA=public
-DB_USER=$varDbUser
-DB_PASSWORD=$varPassword
-KEYCLOAK_USER=$varKeycloak
-KEYCLOAK_PASSWORD=$varPassword
-KEYCLOAK_IMPORT='/tmp/realm-export.json -Dkeycloak.profile.feature.scripts=enabled -Dkeycloak.profile.feature.upload_scripts=enabled'
-KEYCLOAK_LOGLEVEL=WARN
-ROOT_LOGLEVEL=WARN" >> ./auth/keycloak/.env
+DB_DATABASE=$keycloakDbName
+DB_USER=$dbUser
+DB_PASSWORD=$password" >> ./auth/keycloak/.env
     echo "./auth/keycloak/.env created"
 fi
 
@@ -179,10 +162,10 @@ else
 echo \
 "NETWORK_HOST=0.0.0.0
 CLUSTER_NAME=tno-es-cluster
-CLUSTER_INITIAL_MASTER_NODES=$varDbName
-NODE_NAME=$varDbName
-ELASTIC_USERNAME=$varElastic
-ELASTIC_PASSWORD=$varPassword
+CLUSTER_INITIAL_MASTER_NODES=$dbName
+NODE_NAME=$dbName
+ELASTIC_USERNAME=$elasticUser
+ELASTIC_PASSWORD=$password
 DISCOVERY_TYPE=single-node
 DISCOVERY_SEED_HOSTS=
 DISCOVERY_SEED_PROVIDERS=
@@ -196,27 +179,27 @@ if test -f "./api/editor/.env"; then
     echo "./api/editor/.env exists"
 else
 echo \
-"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:50000/auth/
+"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:$portKeycloak/auth/
 
-DB_URL=jdbc:postgresql://host.docker.internal:50002/$varDbName
-DB_USERNAME=$varDbUser
-DB_PASSWORD=$varPassword
+DB_URL=jdbc:postgresql://host.docker.internal:$portDatabase/$dbName
+DB_USERNAME=$dbUser
+DB_PASSWORD=$password
 
-ELASTIC_URIS=host.docker.internal:50007
-ELASTIC_USERNAME=$varElastic
-ELASTIC_PASSWORD=$varPassword
+ELASTIC_URIS=host.docker.internal:$portElastic
+ELASTIC_USERNAME=$elasticUser
+ELASTIC_PASSWORD=$password
 
-AZURE_STORAGE_CONTAINER_NAME=$varDbName
-AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devaccount1;AccountKey=$azureKey;BlobEndpoint=http://host.docker.internal:50020/devaccount1;
+AZURE_STORAGE_CONTAINER_NAME=$dbName
+AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devaccount1;AccountKey=$azureKey;BlobEndpoint=http://host.docker.internal:$portAzureBlob/devaccount1;
 
-COGNITIVE_SERVICES_SPEECH_SUBSCRIPTION_KEY=$varAzureCognitiveServiceKey
-COGNITIVE_SERVICES_SPEECH_REGION=$varAzureCognitiveServiceRegion
+COGNITIVE_SERVICES_SPEECH_SUBSCRIPTION_KEY=$azureCognitiveServiceKey
+COGNITIVE_SERVICES_SPEECH_REGION=$azureCognitiveServiceRegion
 
-AZURE_VIDEO_ANALYZER_SUBSCRIPTION_KEY=$varAzureVideoAnalyzerKey
-AZURE_VIDEO_ANALYZER_ACCOUNT_ID=$varAzureVideoAccountId
-AZURE_VIDEO_ANALYZER_LOCATION=$varAzureVideoLocation
+AZURE_VIDEO_ANALYZER_SUBSCRIPTION_KEY=$azureVideoAnalyzerKey
+AZURE_VIDEO_ANALYZER_ACCOUNT_ID=$azureVideoAccountId
+AZURE_VIDEO_ANALYZER_LOCATION=$azureVideoLocation
 
-KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:50019" >> ./api/editor/.env
+KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:$portKafkaBorkerAdvertisedExternal" >> ./api/editor/.env
     echo "./api/editor/.env created"
 fi
 
@@ -228,7 +211,7 @@ echo \
 "NODE_ENV=development
 CHOKIDAR_USEPOLLING=true
 #API_URL=http://api-editor:8080/
-REACT_APP_KEYCLOAK_AUTH_SERVER_URL=http://localhost:50000/auth" >> ./app/editor/.env
+REACT_APP_KEYCLOAK_AUTH_SERVER_URL=http://localhost:$portKeycloak/auth" >> ./app/editor/.env
     echo "./app/editor/.env created"
 fi
 
@@ -240,7 +223,7 @@ echo \
 "NODE_ENV=development
 CHOKIDAR_USEPOLLING=true
 #API_URL=http://api-subscriber:8080/
-REACT_APP_KEYCLOAK_AUTH_SERVER_URL=http://localhost:50000/auth" >> ./app/subscriber/.env
+REACT_APP_KEYCLOAK_AUTH_SERVER_URL=http://localhost:$portKeycloak/auth" >> ./app/subscriber/.env
     echo "./app/subscriber/.env created"
 fi
 
@@ -266,7 +249,7 @@ echo \
 "KAFKA_BROKER_ID=1
 KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
 KAFKA_LISTENERS=INTERNAL://broker:29092,HOST://broker:9092,EXTERNAL://broker:29094
-KAFKA_ADVERTISED_LISTENERS=INTERNAL://broker:29092,HOST://localhost:50012,EXTERNAL://host.docker.internal:50019
+KAFKA_ADVERTISED_LISTENERS=INTERNAL://broker:29092,HOST://localhost:$portKafkaBrokerAdvertisedHost,EXTERNAL://host.docker.internal:$portKafkaBorkerAdvertisedExternal
 KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,HOST:PLAINTEXT,EXTERNAL:PLAINTEXT
 KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
 KAFKA_AUTO_CREATE_TOPICS_ENABLE='false'
@@ -294,7 +277,7 @@ KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL=http://schema-registry:8081
 # KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS=3
 # KAFKA_CONFLUENT_METRICS_ENABLE='true'
 # KAFKA_CONFLUENT_SUPPORT_CUSTOMER_ID=anonymous
-# KAFKA_KAFKA_REST_ADVERTISED_LISTENERS=http://host.docker.internal:50017
+# KAFKA_KAFKA_REST_ADVERTISED_LISTENERS=http://host.docker.internal:$portKafkaKowl
 # KAFKA_KAFKA_REST_ACCESS_CONTROL_ALLOW_ORIGIN='*'
 # KAFKA_KAFKA_REST_ACCESS_CONTROL_ALLOW_METHODS=GET,POST,PUT,DELETE
 # KAFKA_KAFKA_REST_ACCESS_CONTROL_ALLOW_HEADERS=origin,content-type,accept,authorization" >> ./db/kafka/broker/.env
@@ -398,15 +381,15 @@ if test -f "./services/syndication/atom.env"; then
     echo "./services/syndication/atom.env exists"
 else
 echo \
-"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:50000/auth/
+"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:$portKeycloak/auth/
 
-DB_URL=jdbc:postgresql://host.docker.internal:50002/$varDbName
-DB_USERNAME=$varDbUser
-DB_PASSWORD=$varPassword
+DB_URL=jdbc:postgresql://host.docker.internal:$portDatabase/$dbName
+DB_USERNAME=$dbUser
+DB_PASSWORD=$password
 
-KAFKA_LOGS_TOPIC=atom-logs
+KAFKA_LOGS_TOPIC=logs-atom
 
-KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:50019
+KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:$portKafkaBorkerAdvertisedExternal
 KAFKA_CLIENT_ID=atom-01
 
 MAX_FAILED_ATTEMPTS=5
@@ -427,15 +410,15 @@ if test -f "./services/syndication/rss.env"; then
     echo "./services/syndication/rss.env exists"
 else
 echo \
-"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:50000/auth/
+"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:$portKeycloak/auth/
 
-DB_URL=jdbc:postgresql://host.docker.internal:50002/$varDbName
-DB_USERNAME=$varDbUser
-DB_PASSWORD=$varPassword
+DB_URL=jdbc:postgresql://host.docker.internal:$portDatabase/$dbName
+DB_USERNAME=$dbUser
+DB_PASSWORD=$password
 
-KAFKA_LOGS_TOPIC=rss-logs
+KAFKA_LOGS_TOPIC=logs-rss
 
-KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:50019
+KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:$portKafkaBorkerAdvertisedExternal
 KAFKA_CLIENT_ID=rss-01
 
 MAX_FAILED_ATTEMPTS=5
@@ -456,15 +439,15 @@ if test -f "./services/nlp/.env"; then
     echo "./services/nlp/.env exists"
 else
 echo \
-"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:50000/auth/
+"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:$portKeycloak/auth/
 
-DB_URL=jdbc:postgresql://host.docker.internal:50002/$varDbName
-DB_USERNAME=$varDbUser
-DB_PASSWORD=$varPassword
+DB_URL=jdbc:postgresql://host.docker.internal:$portDatabase/$dbName
+DB_USERNAME=$dbUser
+DB_PASSWORD=$password
 
-KAFKA_LOGS_TOPIC=nlp-logs
+KAFKA_LOGS_TOPIC=logs-nlp
 
-KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:50019
+KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:$portKafkaBorkerAdvertisedExternal
 KAFKA_GROUP_ID=nlp-01
 KAFKA_CONSUMER_TOPICS=news-hth,news-ghi
 KAFKA_POLL_TIMEOUT=5000
@@ -485,15 +468,15 @@ if test -f "./services/elastic/.env"; then
     echo "./services/elastic/.env exists"
 else
 echo \
-"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:50000/auth/
+"KEYCLOAK_AUTH_SERVER_URL=http://host.docker.internal:$portKeycloak/auth/
 
-DB_URL=jdbc:postgresql://host.docker.internal:50002/$varDbName
-DB_USERNAME=$varDbUser
-DB_PASSWORD=$varPassword
+DB_URL=jdbc:postgresql://host.docker.internal:$portDatabase/$dbName
+DB_USERNAME=$dbUser
+DB_PASSWORD=$password
 
-KAFKA_LOGS_TOPIC=elastic-logs
+KAFKA_LOGS_TOPIC=logs-elastic
 
-KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:50019
+KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:$portKafkaBorkerAdvertisedExternal
 KAFKA_GROUP_ID=elastic-01
 KAFKA_CONSUMER_TOPICS=news-nlp
 KAFKA_POLL_TIMEOUT=5000
@@ -502,9 +485,9 @@ AUTO_OFFSET_RESET=earliest
 
 MAX_FAILED_ATTEMPTS=5
 
-ELASTIC_URL=host.docker.internal:50007
-ELASTIC_USERNAME=$varElastic
-ELASTIC_PASSWORD=$varPassword" >> ./services/elastic/.env
+ELASTIC_URL=host.docker.internal:$portElastic
+ELASTIC_USERNAME=$elasticUser
+ELASTIC_PASSWORD=$password" >> ./services/elastic/.env
     echo "./services/elastic/.env created"
 >>>>>>> b5aed4989fae32649fd382d75d5b8361b00a8982
 fi

@@ -31,7 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
-maven-settings.xml
 *.rev
 *.key
-flyway.conf
+maven-settings*.xml
+flyway*.conf
+
+bin/kubectl
+bin/oc
+bin/oc.gz

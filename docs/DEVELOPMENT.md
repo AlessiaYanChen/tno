@@ -55,81 +55,56 @@ This can be helpful if your computer's performance is unable to support developm
 | [jdk](https://docs.oracle.com/en/java/javase/11/install/installation-jdk-microsoft-windows-platforms.html#GUID-A7E27B90-A28D-4237-9383-A58B416071CA) |       11 |                                                            |
 | [maven](http://maven.apache.org/install.html)                                                                                                        |    3.8.2 |                                                            |
 
-## Configure Environment
+## Standup Local Environment
 
 In order for the various components of the solution to work they require the appropriate configuration files to be created.
 You can auto generate them with the provided scripts.
 This process will generate `.env` files in the required locations so that the solution and docker containers can run.
 
 If you have installed `make` you can use the helper method.
+If you haven't installed `make` you can use the docker-compose cli.
+Review the `Makefile` and the related scripts `./tools/scripts` to understand how to do this.
+
+When using `make` commands you can review the options by using the following command.
 
 ```bash
-make setup
+make
 ```
-
-If you haven't installed `make` you can manually run the bash script.
-
-```bash
-./tools/scripts/gen-env-files.sh
-```
-
-## Standup Local Environment
-
-You now have everything installed and ready to be run locally.
-All that remains is to turn everything on.
-The first time you do this takes a little longer as each container needs to be built and initialized.
-After the docker containers are ready it becomes much quicker.
 
 The following containers are hosted in the TNO solution.
 The exposed container ports is configurable, but the defaults are identified below.
 
 | Container       |                Port | Description                                                                                   |
 | --------------- | ------------------: | --------------------------------------------------------------------------------------------- |
-| nginx           |               50080 | Provides a reverse proxy network configuration enable a single entry point to the application |
-| keycloak        |               50000 | Provides authentication and account management services                                       |
-| database        |               50002 | Provides PostgreSQL relational database for the API                                           |
-| elastic         |               50007 | Provides NoSQL Elasticsearch database for the API                                             |
-| azure-storage   | 50020, 50021, 50022 | Azurite local Azure Storage for development                                                   |
-| api-editor      |               50003 | Provides the RESTful API which gives secure access to data                                    |
-| app-editor      |               50005 | Web application for Editors                                                                   |
-| app-subscriber  |               50050 | Web application for Subscribers                                                               |
-| zookeeper       |               50010 | Kafka Zookeeper to manage cluster                                                             |
-| broker          |        50012, 50017 | Kafka server and REST API v3                                                                  |
-| rest-proxy      |               50018 | Kafka REST API                                                                                |
-| schema-registry |               50013 | Kafka schema registry services                                                                |
-| connect         |               50014 | Kafka connect Control Center with Schema Registry                                             |
-| ksqldb-server   |               50016 | Kafka streaming services                                                                      |
+| nginx           |               40080 | Provides a reverse proxy network configuration enable a single entry point to the application |
+| keycloak        |               40001 | Provides authentication and account management services                                       |
+| database        |               40000 | Provides PostgreSQL relational database for the API                                           |
+| elastic         |               40003 | Provides NoSQL Elasticsearch database for the API                                             |
+| azure-storage   | 40006, 40007, 40008 | Azurite local Azure Storage for development                                                   |
+| api-editor      |               40010 | Provides the RESTful API which gives secure access to data                                    |
+| app-editor      |               40081 | Web application for Editors                                                                   |
+| app-subscriber  |               40082 | Web application for Subscribers                                                               |
+| zookeeper       |               40100 | Kafka Zookeeper to manage cluster                                                             |
+| broker          |        40101, 40102 | Kafka server and REST API v3                                                                  |
+| schema-registry |               40103 | Kafka schema registry services                                                                |
+| rest-proxy      |               40104 | Kafka REST API                                                                                |
+| connect         |               40105 | Kafka connect Control Center with Schema Registry                                             |
+| ksqldb-server   |               40106 | Kafka streaming services                                                                      |
 
-If you have installed `make` you can use the helper method.
-
-```bash
-make up
-```
-
-If you haven't installed `make` you can use the docker-compose cli.
-The following command merges multiple compose files, builds and runs all of the containers.
-The assumption for the rest of the documentation is that you have installed `make`.
+The first time you do this takes a little longer as each container needs to be built and initialized.
+After the docker containers are ready it becomes much quicker.
+Additionally, there are a number of configuration settings (usernames, passwords, keys, etc) that are created the first time you execute this script.
 
 ```bash
-docker-compose -f docker-compose.override.yml -f docker-compose.yml -f ./db/kafka/docker-compose.yml -d up
+# Configure your local environment.
+# Start all of the core and kafka containers.
+# Initialize the PostgreSQL database.
+# Initialize the Kafka cluster topics.
+# Initialize the Elasticsearch indexes.
+make init
 ```
 
-Once these containers are running you can then start up the other services.
-
-```bash
-make service-up
-```
-
-| Container  |  Port | Description                                                    |
-| ---------- | ----: | -------------------------------------------------------------- |
-| kafka kowl | 50017 | Kafka UI to view cluster                                       |
-| atom       |       | Kafka Producer to ingest syndication ATOM feeds                |
-| rss        |       | Kafka Producer to ingest syndication RSS feeds                 |
-| transcribe |       | Kafka Consumer/Producer to transcribe audio/video content      |
-| nlp        |       | Kafka Consumer/Producer to perform Natural Language Processing |
-| index      |       | Kafka Consumer to index content for search                     |
-
-Once everything is up and running you can now view the application in your browser.
+You can now view the application in your browser.
 Login into Keycloak with the username and password you configured in your `.env` file.
 You can then change the passwords for the default users to anything you would like.
 Then you can login to the web application with one of those default users.
@@ -140,10 +115,28 @@ Read more [here](../test/README.md).
 
 | Container        | URI                                                      |
 | ---------------- | -------------------------------------------------------- |
-| keycloak         | [http://localhost:50000/](http://localhost:50000)        |
-| app-editor       | [http://localhost:50080/app](http://localhost:50080/app) |
-| app-subscriber   | [http://localhost:50080](http://localhost:50080)         |
-| app-api          | [http://localhost:50080/api](http://localhost:50080/api) |
-| elastic          | [http://localhost:50007](http://localhost:50007)         |
-| kafka kowl       | [http://localhost:50017](http://localhost:50017)         |
-| kafka rest-proxy | [http://localhost:50018](http://localhost:50018)         |
+| app-editor       | [http://localhost:40081/app](http://localhost:40081/app) |
+| app-subscriber   | [http://localhost:40082](http://localhost:40082)         |
+| api-editor       | [http://localhost:40010/api](http://localhost:40010/api) |
+| keycloak         | [http://localhost:40001/](http://localhost:40001)        |
+| kafka rest-proxy | [http://localhost:40104](http://localhost:40104)         |
+| kafka kowl       | [http://localhost:40180](http://localhost:40180)         |
+| elastic          | [http://localhost:40003](http://localhost:40003)         |
+
+Once the core and Kafka containers are running you can then start up the other services.
+
+```bash
+make service-up
+```
+
+Below is a list of all the additional services and utilities.
+
+| Container  |  Port | Description                                                    |
+| ---------- | ----: | -------------------------------------------------------------- |
+| kowl       | 40180 | Kafka UI to view cluster                                       |
+| dejavu     | 40005 | Elasticsearch UI to view cluster                               |
+| rss        | 40020 | Kafka Producer to ingest syndication RSS feeds                 |
+| atom       | 40021 | Kafka Producer to ingest syndication ATOM feeds                |
+| nlp        | 40022 | Kafka Consumer/Producer to perform Natural Language Processing |
+| indexing   | 40023 | Kafka Consumer to index content for search                     |
+| transcribe |       | Kafka Consumer/Producer to transcribe audio/video content      |
